@@ -28,11 +28,11 @@ JSON / CSV 리포트 저장
 
 ## 데모 개요
 
-아래 GIF들은 [examples/create_readme_demo.py](examples/create_readme_demo.py)로 생성했습니다.
 
-데모에는 실제 [Sentinel-2 L2A Cloud Optimized GeoTIFF](https://registry.opendata.aws/sentinel-2-l2a-cogs/) 데이터를 사용했습니다. 데이터 검색은 [Element 84 Earth Search STAC API](https://earth-search.aws.element84.com/v1)를 통해 수행합니다.
+데모에는 실제 [Sentinel-2 L2A Cloud Optimized GeoTIFF](https://registry.opendata.aws/sentinel-2-l2a-cogs/) 데이터를 사용했습니다. 
+데이터 검색은 [Element 84 Earth Search STAC API](https://earth-search.aws.element84.com/v1)를 통해 수행합니다.
 
-중요한 점은, 전체 Sentinel-2 장면을 다운로드하지 않는다는 것입니다. Sentinel-2 true-color COG 타일은 대략 `10980 x 10980` 픽셀 크기인데, 데모에서는 이 중 `2048 x 2048` 픽셀 window만 원격에서 읽습니다. 즉, 이 데모는 작은 패치 데이터셋이 아니라 **큰 원본 위성영상에서 필요한 부분만 읽고 직접 칩으로 자르는 실제 대형 래스터 처리 흐름**을 보여줍니다.
+이 데모는 작은 패치 데이터셋이 아니라 **큰 원본 위성영상에서 필요한 부분만 읽고 직접 칩으로 자르는 실제 대형 래스터 처리 흐름**을 보여줍니다.
 
 현재 README 데모에 사용된 대표 장면:
 
@@ -47,18 +47,7 @@ JSON / CSV 리포트 저장
 
 ![satprep grid and quality demo](docs/assets/satprep_grid_quality.gif)
 
-이 데모는 `satprep`의 가장 중요한 기능인 **대형 위성영상 칩 생성과 칩 품질 분류**를 보여줍니다.
-
-### 무엇을 위해 하는가
-
-딥러닝 학습용 위성영상 데이터셋을 만들 때, 원본 장면 전체를 그대로 쓰기 어렵습니다. 보통 일정한 크기의 칩으로 잘라야 하고, 구름이나 그림자가 심한 칩은 학습에서 제외하거나 별도 검토해야 합니다.
-
-이 데모는 다음 질문에 답합니다.
-
-- 큰 Sentinel-2 COG에서 원하는 영역만 읽을 수 있는가?
-- 지리공간 메타데이터를 유지하면서 칩으로 자를 수 있는가?
-- 각 칩이 학습에 적합한지 자동으로 점수화할 수 있는가?
-- 최종적으로 `usable`, `warning`, `reject`로 나눌 수 있는가?
+이 데모는 `satprep`의 가장 중요한 기능인 **대형 위성영상 칩 생성과 칩 품질 분류** 결과를 보여줍니다.
 
 ### 내부 처리 흐름
 
@@ -100,29 +89,43 @@ rejected_chips: 0
 
 ![satprep super-resolution demo](docs/assets/satprep_super_resolution.gif)
 
-이 데모는 저해상도 입력을 초해상도 모델로 복원하는 흐름을 보여줍니다. 왼쪽은 low-scale input이고, 오른쪽은 `satprep`이 Hugging Face pretrained HAN 모델을 통해 생성한 super-resolution 결과입니다.
+이 데모는 저해상도 위성 이미지를 초해상도(super-resolution) 기법으로 복원하는 흐름을 보여줍니다.  
+왼쪽은 low-resolution input 이미지이며, 오른쪽은 `satprep`이 super-resolution 모델을 통해 복원한 결과입니다.
 
-### 무엇을 위해 하는가
+`satprep`은 딥러닝 기반 초해상도 모델을 모듈 형태로 지원하며, 사용자는 목적에 따라 다양한 pretrained 모델을 선택하여 적용할 수 있습니다.
 
-위성영상에서는 동일 지역이라도 센서, 밴드, 시기, 데이터 소스에 따라 공간 해상도가 다를 수 있습니다. 고전적 보간으로 확대할 수도 있지만, 딥러닝 초해상도 모델을 이용하면 더 선명하게 보이는 결과를 만들 수 있습니다.
+### 사용 가능한 모델 예시
 
-이 데모는 다음을 보여줍니다.
+현재 데모에서는 Hugging Face 모델인  
+[eugenesiow/han](https://huggingface.co/eugenesiow/han?utm_source=chatgpt.com) 을 사용합니다.
 
-- 기존 `nearest`, `bilinear`, `bicubic`, `lanczos` 업스케일링과 별도로 딥러닝 초해상도 인터페이스를 사용할 수 있음
-- Hugging Face의 pretrained 모델을 `satprep` wrapper에서 호출할 수 있음
-- README에서 low-scale input과 초해상도 결과를 좌우 비교로 확인할 수 있음
-
-### 사용한 모델
-
-데모에서는 Hugging Face 모델 [eugenesiow/han](https://huggingface.co/eugenesiow/han)을 사용합니다.
-
-- 모델명: HAN, Holistic Attention Network
-- 논문: Single Image Super-Resolution via a Holistic Attention Network
+- 모델명: HAN (Holistic Attention Network)
+- 논문: *Single Image Super-Resolution via a Holistic Attention Network*
 - 라이브러리: `super-image`
 - 사용 checkpoint: `pytorch_model_4x.pt`
-- 지원 scale: 현재 데모는 `x4` 기준
+- 지원 scale: 현재 README 데모는 `x4` 기준
 
-현재 `eugenesiow/han` repository에는 `pytorch_model_4x.pt` checkpoint가 제공되어 있어, README 데모도 `scale=4`로 구성했습니다.
+### 모델 확장성
+
+`satprep`의 super-resolution pipeline은 특정 모델에 종속되지 않도록 설계되었습니다.
+
+따라서 향후 아래와 같은 다양한 딥러닝 기반 초해상도 모델로 확장 가능합니다.
+
+- EDSR
+- ESRGAN / Real-ESRGAN
+- SwinIR
+- RCAN
+- HAT
+- LIIF
+- Diffusion-based SR models
+
+사용자는 목적에 따라:
+- 복원 품질 중심
+- 속도 중심
+- 실제 위성 영상 복원 특화
+- 노이즈 제거 포함 복원
+
+등의 다양한 모델을 선택하여 적용할 수 있습니다.
 
 ### 내부 처리 흐름
 
@@ -183,7 +186,6 @@ satprep super-resolve input.tif --model han --scale 4 --out sr.tif
 - 모든 날짜가 구름 후보인 경우에는 median fallback 사용
 - 최종 결과에는 약간의 밝기 보정 적용
 
-현재 데모에서는 plain median보다 다음처럼 개선되었습니다.
 
 ```text
 median 평균 밝기: 97.97
@@ -198,28 +200,6 @@ clear-sky dark pixel ratio: 0.023
 
 즉, 결과가 더 밝고, 구름처럼 흰 영역과 그림자처럼 어두운 영역이 줄어듭니다.
 
-## 데모 재생성 방법
-
-```bash
-python examples/create_readme_demo.py
-```
-
-이 스크립트는 다음 외부 접근이 필요합니다.
-
-- Earth Search STAC API
-- Sentinel-2 L2A COG 원격 읽기
-- Hugging Face `eugenesiow/han` 모델 다운로드
-
-생성되는 주요 결과:
-
-```text
-docs/assets/satprep_grid_quality.gif
-docs/assets/satprep_super_resolution.gif
-docs/assets/satprep_temporal_composite.gif
-docs/demo_outputs/
-```
-
-`docs/assets/*.gif`는 README에 들어가는 최종 시각화 자산입니다. `docs/demo_outputs/`는 중간 산출물이므로 `.gitignore` 대상입니다.
 
 ## 주요 기능
 
@@ -295,10 +275,6 @@ NumPy: 2.1.2
 pandas: 2.2.3
 Pillow: 10.4.0
 ```
-
-GPU는 필수는 아닙니다. 다만 HAN 같은 딥러닝 초해상도 모델은 CPU에서도 실행 가능하지만 느릴 수 있습니다.
-
-Windows 환경에서 Hugging Face 모델을 다운로드할 때 symlink cache warning이 뜰 수 있습니다. 이는 Hugging Face 캐시 방식 관련 경고이며, 모델 실행 자체가 실패했다는 뜻은 아닙니다.
 
 ## 빠른 시작
 
@@ -400,35 +376,4 @@ stack = np.stack([image_t1, image_t2, image_t3], axis=0)
 composite = create_clear_sky_composite(stack)
 ```
 
-## 현재 한계
-
-- STAC 지원은 현재 README 데모 스크립트 중심이며, 패키지 API로는 아직 최소 구현 상태입니다.
-- cloud/shadow 분석은 Sentinel-2 SCL 공식 마스크가 아니라 RGB 휴리스틱입니다.
-- multi-temporal fusion은 입력 영상들이 이미 같은 CRS, transform, width, height로 정렬되어 있다고 가정합니다.
-- HAN 모델은 자연영상 기반 pretrained 모델이므로 위성영상 물리 해상도 검증 모델이 아닙니다.
-- super-resolution 결과는 시각적 향상 결과이며, 실제 지상 객체가 물리적으로 새로 관측된 것처럼 해석하면 안 됩니다.
-- README 데모는 Sentinel-2 true-color `visual` asset을 사용합니다. NIR/SWIR 기반 정밀 구름 탐지는 아직 포함하지 않았습니다.
-
-## Roadmap
-
-- STAC API 정식 지원
-- Sentinel-2 / Landsat preset
-- Sentinel-2 SCL 기반 cloud/shadow masking
-- DSen2 wrapper preset
-- HAN 모델 옵션 확장
-- SwinIR wrapper preset
-- Real-ESRGAN wrapper preset
-- HighRes-net wrapper preset
-- DeepSUM wrapper preset
-- Pansharpening 개선
-- TorchGeo integration
-- COCO / YOLO export
-- Notebook 기반 시각화 예제
-
-## 데이터 출처
-
-- Sentinel-2 L2A Cloud Optimized GeoTIFF: [AWS Open Data Registry](https://registry.opendata.aws/sentinel-2-l2a-cogs/)
-- STAC 검색: [Element 84 Earth Search](https://earth-search.aws.element84.com/v1)
-- README 데모 사용 item: `S2B_52SCG_20240819_0_L2A`
-- 초해상도 모델: [Hugging Face eugenesiow/han](https://huggingface.co/eugenesiow/han)
 
