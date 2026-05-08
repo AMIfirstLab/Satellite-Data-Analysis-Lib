@@ -151,21 +151,12 @@ CLI 사용 예시:
 satprep super-resolve input.tif --model han --scale 4 --out sr.tif
 ```
 
-### 주의 사항
-
-딥러닝 초해상도는 실제로 없던 세부 구조를 그럴듯하게 만들 수 있습니다. 따라서 결과를 물리적으로 검증된 ground truth처럼 취급하면 안 됩니다. 특히 과학 분석, 군사, 재난 대응, 탐지 성능 평가처럼 정확도가 중요한 작업에서는 원본 영상과 반드시 비교해야 합니다.
-
-또한 HAN 모델은 자연영상 super-resolution 데이터셋으로 학습된 모델입니다. 위성영상에 적용할 수는 있지만, Sentinel-2 전용 물리 모델은 아닙니다. 이 프로젝트에서는 시각적 향상과 wrapper 인터페이스 데모 용도로 사용합니다.
 
 ## 데모 3. Multi-Temporal Composite
 
 ![satprep temporal composite demo](docs/assets/satprep_temporal_composite.gif)
 
 이 데모는 같은 지역을 여러 날짜에 촬영한 Sentinel-2 영상으로 더 깨끗한 합성 영상을 만드는 과정을 보여줍니다.
-
-### 무엇을 위해 하는가
-
-위성영상에는 날짜마다 구름, 그림자, 연무, 밝기 차이, 계절 변화가 섞일 수 있습니다. 단일 날짜 영상만 보면 특정 지역이 구름에 가려져 있거나 너무 어두울 수 있습니다. 여러 날짜 영상을 조합하면 이런 일시적 문제를 줄일 수 있습니다.
 
 이 데모는 다음을 보여줍니다.
 
@@ -176,9 +167,7 @@ satprep super-resolve input.tif --model han --scale 4 --out sr.tif
 
 ### 사용한 합성 방법
 
-처음에는 `median composite`를 사용했지만, 날짜 수가 적을 때는 구름이 충분히 사라지지 않고 결과가 다소 어두워질 수 있습니다. 그래서 README 데모에는 `create_clear_sky_composite()`를 사용합니다.
-
-이 방식은 RGB 기반 휴리스틱으로 각 날짜의 같은 위치 픽셀을 비교합니다.
+ RGB 기반 휴리스틱으로 각 날짜의 같은 위치 픽셀을 비교하여 처리합니다.
 
 - 너무 밝고 흰색에 가까운 픽셀은 구름 후보로 보고 감점
 - 너무 어두운 픽셀은 그림자 후보로 보고 감점
